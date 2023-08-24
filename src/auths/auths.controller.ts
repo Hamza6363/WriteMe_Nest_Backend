@@ -15,6 +15,7 @@ export class AuthsController {
 
   @Post('login')
   async login(@Req() req, @Res() res) {
+    
     const user = req.body
     await this.authsService.login(user)
       .then(response => {
