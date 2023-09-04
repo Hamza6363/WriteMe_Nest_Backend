@@ -38,6 +38,7 @@ export class AuthsService {
   async login(body) {
     const user = await this.userService.findByEmail(body.email);
     if (user && bcrypt.compareSync(body.password, user.password)) {
+      
       return {
         ok: true,
         token: await this.jwtService.signAsync(

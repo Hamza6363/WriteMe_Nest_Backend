@@ -42,7 +42,6 @@ export class UsersController {
       });
   }
 
-
   @Post('signup-verification')
   @UsePipes(new ValidationPipe())
   async signup_verification(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
@@ -81,6 +80,175 @@ export class UsersController {
       });
   }
 
+  @Post('login')
+  @UsePipes(new ValidationPipe())
+  async login(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    await this.usersService.login(
+      body.email,
+      body.password
+    )
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @Post('email-verification')
+  @UsePipes(new ValidationPipe())
+  async email_verification(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    let verify_code = Math.floor(Math.random() * (10000 - 1000 + 1) + 1000);
+
+    await this.usersService.email_verification(body.email, verify_code)
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @Post('email-verification-code')
+  @UsePipes(new ValidationPipe())
+  async email_verification_code(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    await this.usersService.email_verification_code(body.id, body.verify_code)
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @Post('login-reset-password')
+  @UsePipes(new ValidationPipe())
+  async login_reset_password(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    await this.usersService.reset_password(body.id, body.password)
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @Post('signup-social-register')
+  @UsePipes(new ValidationPipe())
+  async signup_social_register(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    await this.usersService.signup_social_register(body.first_name, body.last_name, body.user_name, body.email, body.password, body.token_for_business, body.login_type)
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @Post('login-social-register')
+  @UsePipes(new ValidationPipe())
+  async login_social_register(@Req() req, @Res() res, @Body() body, createUserDto: CreateUserDto) {
+
+    await this.usersService.login_social_register(body.first_name, body.last_name, body.user_name, body.email, body.password, body.token_for_business, body.login_type)
+      .then(response => {
+        return res.status(200).json({ response });
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('getApiFilePath')
+  async getToken(@Req() req, @Res() res) {
+    await this.usersService.getApiFilePath()
+
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('user-subscription')
+  async user_subscription(@Req() req, @Res() res) {
+    await this.usersService.user_subscription(req.user.sub)
+
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('article-generate')
+  async article_generate(@Req() req, @Res() res, @Body() body) {
+    
+    await this.usersService.article_generate(req.user.sub, req)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
 
   @Get()
   findAll() {
@@ -100,27 +268,5 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('getApiFilePath')
-  async getToken(@Req() req, @Res() res) {
-
-    await this.usersService.getApiFilePath()
-
-      .then(response => {
-        return res.status(200).json({
-          status: 200,
-          response,
-        });
-      })
-      .catch(error => {
-        // Handle error
-        return res.status(500).json({
-          status: 500,
-          code: 'error',
-          message: 'An error occurred.',
-        });
-      });
   }
 }

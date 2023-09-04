@@ -1,77 +1,62 @@
-import {
-    Entity, Column, PrimaryGeneratedColumn, OneToOne, CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-    JoinColumn
-} from 'typeorm'
-
-enum UserRole {
-    Admin = 'admin',
-    User = 'user',
-}
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Article } from 'src/article/entities/article.entity';
+import { UserUsage } from 'src/user_usage/entities/user_usage.entity';
 
 @Entity()
 export class User {
-
     @PrimaryGeneratedColumn()
-    id: number
+    id: number;
 
     @Column()
-    login: string
+    first_name: string;
 
     @Column()
-    first_name: string
+    last_name: string;
+
+    @Column()
+    email: string;
+
+    @Column()
+    password: string;
+
+    @Column()
+    login: string;
+
+    @Column()
+    amemberId: number;
+
+    @Column()
+    type: string;
+
+    @Column()
+    verify_code: string;
+
+    @Column()
+    pic: string;
     
     @Column()
-    last_name: string
+    user_name: string;
+
+    @Column()
+    lastArticleId: number;
+
+    @Column()
+    token_for_business: string;
     
     @Column()
-    user_name: string
-    
-    @Column()
-    email: string
-    
-    @CreateDateColumn({type: 'timestamp'})
-    email_verified_at: Date
-    
-    @Column()
-    password: string
-    
-    @Column()
-    remember_token: string
-    
-    @Column({
-        type: 'enum',
-        enum: UserRole,
-        default: UserRole.User, // You can set a default value if needed
+    login_type: string;
+
+    @Column({type: 'timestamp', nullable: true})
+    deletedAt: Date;
+
+    @ManyToMany(type => Article)
+    @JoinTable({
+        name: 'user_downloads',
+        joinColumn: { name: 'userId', referencedColumnName: 'id'},
+        inverseJoinColumn: { name: 'articleId', referencedColumnName: 'id'}
     })
-    type: string
-    
-    @Column()
-    last_artical_id: number
-    
-    @Column()
-    last_temp_artical_id: number
+    downloadedArticles: Article[];
 
-    @Column()
-    verify_code: string
-
-    @CreateDateColumn({type: 'timestamp'})
-    created_at: Date
-
-    @UpdateDateColumn({type: 'timestamp'})
-    updated_at: Date
-
-    @DeleteDateColumn()
-    deleted_at: Date
-
-    @Column()
-    amember_id:number
-
-    @Column()
-    pic: string
-    
-    @Column()
-    token_for_business: string
-    
-    @Column()
-    login_type: string
+    @OneToMany(type => UserUsage, userUsage => userUsage.user)
+    usages: UserUsage[];
 }
