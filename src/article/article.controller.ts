@@ -34,7 +34,27 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Post('get-aricle')
   async get_aricle(@Req() req, @Res() res, @Body() body) {
-    await this.articleService.get_aricle(req.user.sub, body.project_id, body.article_id)
+    await this.articleService.get_aricle(req.user.sub, body.project_id)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('get-edit-aricle')
+  async get_edit_aricle(@Req() req, @Res() res, @Body() body) {
+    await this.articleService.get_edit_aricle(req.user.sub, body.project_id, body.article_id)
       .then(response => {
         return res.status(200).json({
           status: 200,
@@ -55,6 +75,26 @@ export class ArticleController {
   @Post('update-article')
   async update_article(@Req() req, @Res() res, @Body() body) {
     await this.articleService.update_article(body.article_id, body.title)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+  
+  @UseGuards(AuthGuard)
+  @Post('delete-article')
+  async delete_article(@Req() req, @Res() res, @Body() body) {
+    await this.articleService.delete_article(req.user.sub, body.project_id, body.article_id)
       .then(response => {
         return res.status(200).json({
           status: 200,

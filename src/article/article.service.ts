@@ -64,12 +64,20 @@ export class ArticleService {
         message: "Article already exist"
       };
     }
-
-
-
   }
 
-  async get_aricle(userId: number, project_id: number, articleId: number) {
+  async get_aricle(userId: number, projectId: number) {
+
+    let getArticles = await this.articleRepository.find({ where: { user_id: userId, project_id: projectId } });
+
+    return {
+      status: 200,
+      ok: true,
+      result: getArticles
+    };
+  }
+
+  async get_edit_aricle(userId: number, project_id: number, articleId: number) {
 
     let getArticles = await this.articleRepository.find({ where: { user_id: userId, project_id: project_id, id: articleId } });
 
@@ -78,18 +86,30 @@ export class ArticleService {
       ok: true,
       result: getArticles
     };
-
   }
 
   async update_article(id: number, title: string) {
 
     await this.articleRepository.update(id, { title: title });
-
     return {
       status: 200,
       ok: true,
       message: "Article updated successfully"
     };
+  }
 
+  async delete_article(userId: number, project_id: number, id: number) {
+
+    const date = new Date();
+    let time = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)) + "-" + ("0" + date.getDate()).slice(-2) + " " + ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2) + ":" + ("0" + date.getSeconds()).slice(-2);
+
+    await this.articleRepository.update(id, { deletedAt: time });
+
+    return {
+      status: 200,
+      ok: true,
+      message: "Article deleted successfully"
+    };
   }
 }
+
