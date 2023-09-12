@@ -19,6 +19,7 @@ export class UserPlansController {
   async user_usage(@Req() req, @Res() res) {
     await this.userPlansService.user_usage(req.user.sub)
       .then(response => {
+        console.log(response);
         return res.status(200).json({
           status: 200,
           response,

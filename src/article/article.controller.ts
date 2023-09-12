@@ -110,6 +110,26 @@ export class ArticleController {
         });
       });
   }
+  
+  @UseGuards(AuthGuard)
+  @Post('update-article-generator')
+  async update_article_generator(@Req() req, @Res() res, @Body() body) {
+    await this.articleService.update_article_generator(req.user.sub, body.project_id, body.article_id, body.article_text)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
 
   @Post()
   create(@Body() createArticleDto: CreateArticleDto) {

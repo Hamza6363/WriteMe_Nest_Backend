@@ -111,10 +111,11 @@ export class UsersService {
 
 
       const apiUrl = 'https://backend.writeme.ai/amember/api/users';
+      const apiUrl2 = 'https://backend.writeme.ai/amember/api/access?_key=VOdigxYoFL0cvyIcCE58';
 
       const data = {
         _key: 'VOdigxYoFL0cvyIcCE58',
-        login: email, 
+        login: email,
         pass: '0000',
         email,
         name_f: first_name,
@@ -128,7 +129,19 @@ export class UsersService {
         },
       };
 
-      await axios.post(apiUrl, new URLSearchParams(data).toString(), config);
+      let aMemberUser = await axios.post(apiUrl, new URLSearchParams(data).toString(), config);
+      console.log(aMemberUser);
+
+      let accessData = {
+        _key: "VOdigxYoFL0cvyIcCE58",
+        user_id: aMemberUser.data[0].user_id,
+        product_id: '2',
+        begin_date: new Date().toISOString().slice(0, 10),
+        expire_date: '2037-12-31',
+      };
+
+      let aMemberAccess = await axios.post(apiUrl2, new URLSearchParams(accessData).toString(), config);
+      console.log(aMemberAccess);
 
       const to = email;
       const subject = 'Email Verification';
@@ -142,6 +155,7 @@ export class UsersService {
       user.email = email;
       user.verify_code = verify_code;
       user.pic = pic;
+      user.amemberId = aMemberUser.data[0].user_id
 
       let getInsertData = await this.userRepository.save(user);
 
@@ -270,9 +284,25 @@ export class UsersService {
         message: "Your password must be in 8 character"
       };
     }
+    
 
     let bcryptPassword = await this.hashPassword(password)
     await this.userRepository.update(id, { user_name: user_name, password: bcryptPassword });
+
+    let getUserData = await this.filterById(id);
+
+    const getPlanData = await this.planRepository.findOne({ where: { plan_id: 2 } })
+
+    let userPlan = new UserPlan();
+    userPlan.user_id = getUserData.id;
+    userPlan.plan_id = getPlanData.plan_id;
+    userPlan.qty = 1;
+    userPlan.purchase_at = new Date();
+    userPlan.credit_tabs = Number(getPlanData.tab);
+    userPlan.credit_articles = Number(getPlanData.article);
+    userPlan.invoice_id = 1;
+
+    await this.userPlanRepository.save(userPlan);
 
     return {
       status: 200,
@@ -378,8 +408,9 @@ export class UsersService {
 
     let getUserData = await this.filterById(id);
 
+
     let getUserSubscription = await axios.get(process.env.AMEMBER_BASEURL + '/check-access/by-email?_key=' + process.env.AMEMBER_KEY + '&email=khubaib@siliconwebteam.com')
-    
+
 
     let getUserSubscriptionId = Object.keys(getUserSubscription.data.subscriptions);
 
@@ -411,7 +442,7 @@ export class UsersService {
     let date = new Date();
     date.setDate(date.getDate() - 30);
 
-    await this.userPlanRepository
+    let getMember = await this.userPlanRepository
       .createQueryBuilder()
       .update(UserPlan)
       .set({ expired: 1 })
@@ -422,13 +453,17 @@ export class UsersService {
     date = new Date();
     date.setDate(date.getDate() - 365);
 
-    await this.userPlanRepository
+    console.log(getMember);
+
+    let getLifeTimeMember = await this.userPlanRepository
       .createQueryBuilder()
       .update(UserPlan)
       .set({ expired: 1 })
       .where('purchased_at < :date', { date })
       .andWhere('user_id = :user_id', { user_id: userId })
       .andWhere('plan_id = :plan_id', { plan_id: 13 });
+
+    console.log(getLifeTimeMember);
 
     const balance = await this.userPlanRepository
       .createQueryBuilder('user_plans')
@@ -576,8 +611,8 @@ export class UsersService {
   }
 
   async article_generate(userId: number, req: string[]) {
-    await this.getAllow(11, req['body'].type)
-      // await this.getAllow(userId, req['body'].type)
+    // await this.getAllow(11, req['body'].type)
+    await this.getAllow(userId, req['body'].type)
 
 
       .then(function (result) {

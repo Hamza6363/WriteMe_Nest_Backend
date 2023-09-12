@@ -36,22 +36,21 @@ export class UserPlansService {
 
   async user_usage(userId: number): Promise<UserPlan[]> {
 
-    let getUserPlan = this.userPlanRepository.createQueryBuilder('user_plan')
+    let getUserPlan = await this.userPlanRepository.createQueryBuilder('user_plans')
       .select([
-        'SUM(user_plan.credit_tabs) - SUM(user_plan.debit_tabs) as tabs_total',
-        'SUM(user_plan.credit_articles) - SUM(user_plan.debit_articles) as articles_total',
-        'SUM(user_plan.credit_tabs) as month_tabs',
-        'user_plan.user_id',
-        'SUM(user_plan.credit_articles) as month_articles',
+        'SUM(user_plans.credit_tabs) - SUM(user_plans.debit_tabs) as tabs_total',
+        'SUM(user_plans.credit_articles) - SUM(user_plans.debit_articles) as articles_total',
+        'SUM(user_plans.credit_tabs) as month_tabs',
+        'user_plans.user_id',
+        'SUM(user_plans.credit_articles) as month_articles',
       ])
-      .where('user_plan.user_id = :userId', { userId })
-      .andWhere('user_plan.used = :used', { used: 0 })
-      .andWhere('user_plan.expired = :expired', { expired: 0 })
-      .andWhere('user_plan.invoice_payment_id != :invoicePaymentId', { invoicePaymentId: 0 })
-      .groupBy('user_plan.user_id')
+      .where('user_plans.user_id = :userId', { userId })
+      .andWhere('user_plans.used = :used', { used: 0 })
+      .andWhere('user_plans.expired = :expired', { expired: 0 })
+      .andWhere('user_plans.invoice_payment_id != :invoice_payment_id', { invoice_payment_id: 1 })
+      .groupBy('user_plans.user_id')
       .limit(1)
       .getRawOne();
-
       
     return getUserPlan; 
   }

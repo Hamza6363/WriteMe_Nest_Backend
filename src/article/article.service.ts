@@ -111,5 +111,10 @@ export class ArticleService {
       message: "Article deleted successfully"
     };
   }
+
+  async update_article_generator(userId: number, project_id: number, id: number, article: string ){
+    let getArticleData = await this.articleRepository.update(id, { article: article });
+    console.log(getArticleData);
+  }
 }
 
