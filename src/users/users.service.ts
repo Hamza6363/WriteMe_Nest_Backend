@@ -114,9 +114,9 @@ export class UsersService {
 
       const data = {
         _key: 'VOdigxYoFL0cvyIcCE58',
-        login: first_name,
+        login: email, 
         pass: '0000',
-        email: email,
+        email,
         name_f: first_name,
         name_l: last_name,
         status: 'active',
@@ -378,10 +378,8 @@ export class UsersService {
 
     let getUserData = await this.filterById(id);
 
-    // let getUserSubscription = await axios.get(process.env.AMEMBER_BASEURL + '/check-access/by-email?_key=' + process.env.AMEMBER_KEY + '&email=' + getUserData.email)
-    // console.log(getUserData.email);
     let getUserSubscription = await axios.get(process.env.AMEMBER_BASEURL + '/check-access/by-email?_key=' + process.env.AMEMBER_KEY + '&email=khubaib@siliconwebteam.com')
-    console.log('here', getUserSubscription);
+    
 
     let getUserSubscriptionId = Object.keys(getUserSubscription.data.subscriptions);
 

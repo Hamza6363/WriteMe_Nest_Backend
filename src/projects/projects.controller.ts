@@ -56,7 +56,7 @@ export class ProjectsController {
   @UseGuards(AuthGuard)
   @Get('get-project')
   async get_project(@Req() req, @Res() res, @Body() body) {
-    await this.projectsService.get_project()
+    await this.projectsService.get_project(req.user.sub)
       .then(response => {
         return res.status(200).json({
           status: 200,

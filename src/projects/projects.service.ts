@@ -93,8 +93,8 @@ export class ProjectsService {
     };
   }
 
-  async get_project() {
-    let getProjects = await this.projectRepository.find({ where: { deletedAt: null } });
+  async get_project(user_id) {
+    let getProjects = await this.projectRepository.find({ where: { user_id:user_id, deletedAt: null } });
 
     return {
       status: 200,

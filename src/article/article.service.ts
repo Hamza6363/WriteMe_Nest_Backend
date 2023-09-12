@@ -46,9 +46,9 @@ export class ArticleService {
     article.intent = intent;
     article.article_heading = JSON.stringify(articleHeading);
 
-    let getDataFromArticle =  await this.articleRepository.findOne({ where: { title: title , project_id: projectId, user_id: userId} })
+    let getDataFromArticle = await this.articleRepository.findOne({ where: { title: title, project_id: projectId, user_id: userId } })
 
-    if(getDataFromArticle == null){
+    if (getDataFromArticle == null) {
       await this.articleRepository.save(article);
 
       return {
@@ -57,7 +57,7 @@ export class ArticleService {
         message: "Article added successfully"
       };
     }
-    else{
+    else {
       return {
         status: 200,
         ok: false,
@@ -65,18 +65,30 @@ export class ArticleService {
       };
     }
 
-    
+
 
   }
 
-  async get_aricle (userId: number, projectId: number){
+  async get_aricle(userId: number, project_id: number, articleId: number) {
 
-    let getArticles =  await this.articleRepository.find({ where: { user_id: userId , project_id: projectId } });
+    let getArticles = await this.articleRepository.find({ where: { user_id: userId, project_id: project_id, id: articleId } });
 
     return {
       status: 200,
       ok: true,
       result: getArticles
+    };
+
+  }
+
+  async update_article(id: number, title: string) {
+
+    await this.articleRepository.update(id, { title: title });
+
+    return {
+      status: 200,
+      ok: true,
+      message: "Article updated successfully"
     };
 
   }
