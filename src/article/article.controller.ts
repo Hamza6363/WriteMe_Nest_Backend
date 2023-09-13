@@ -52,6 +52,26 @@ export class ArticleController {
   }
 
   @UseGuards(AuthGuard)
+  @Post('get-aricle-generator')
+  async get_aricle_generator(@Req() req, @Res() res, @Body() body) {
+    await this.articleService.get_aricle_generator(req.user.sub, body.article_id)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
   @Post('get-edit-aricle')
   async get_edit_aricle(@Req() req, @Res() res, @Body() body) {
     await this.articleService.get_edit_aricle(req.user.sub, body.project_id, body.article_id)
@@ -114,7 +134,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Post('update-article-generator')
   async update_article_generator(@Req() req, @Res() res, @Body() body) {
-    await this.articleService.update_article_generator(req.user.sub, body.project_id, body.article_id, body.article_text)
+    await this.articleService.update_article_generator(req.user.sub, body.article_id, body.article_text)
       .then(response => {
         return res.status(200).json({
           status: 200,

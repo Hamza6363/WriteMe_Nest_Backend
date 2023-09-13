@@ -77,6 +77,16 @@ export class ArticleService {
     };
   }
 
+  async get_aricle_generator(userId: number, id: number){
+    let getArticles = await this.articleRepository.find({ where: { id } });
+
+    return {
+      status: 200,
+      ok: true,
+      result: getArticles
+    };
+  }
+
   async get_edit_aricle(userId: number, project_id: number, articleId: number) {
 
     let getArticles = await this.articleRepository.find({ where: { user_id: userId, project_id: project_id, id: articleId } });
@@ -112,9 +122,15 @@ export class ArticleService {
     };
   }
 
-  async update_article_generator(userId: number, project_id: number, id: number, article: string ){
+  async update_article_generator(userId: number, id: number, article: string ){
+    
     let getArticleData = await this.articleRepository.update(id, { article: article });
-    console.log(getArticleData);
+    
+    return {
+      status: 200,
+      ok: true,
+      message: "Generated Article updated successfully"
+    };
   }
 }
 

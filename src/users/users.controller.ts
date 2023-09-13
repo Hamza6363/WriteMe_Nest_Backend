@@ -232,8 +232,51 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Post('article-generate')
   async article_generate(@Req() req, @Res() res, @Body() body) {
-    
+
     await this.usersService.article_generate(req.user.sub, req)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('set-latest-article')
+  async set_latest_article(@Req() req, @Res() res, @Body() body) {
+
+    await this.usersService.set_latest_article(req.user.sub, body.article_id)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('get-latest-article')
+  async get_latest_article(@Req() req, @Res() res, @Body() body) {
+
+    await this.usersService.get_latest_article(req.user.sub)
       .then(response => {
         return res.status(200).json({
           status: 200,

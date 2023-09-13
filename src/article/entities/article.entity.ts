@@ -8,7 +8,7 @@ export class Article {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column('text')
     article: string;
 
     @Column()

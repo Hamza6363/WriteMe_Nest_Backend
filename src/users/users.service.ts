@@ -109,7 +109,6 @@ export class UsersService {
     }
     else {
 
-
       const apiUrl = 'https://backend.writeme.ai/amember/api/users';
       const apiUrl2 = 'https://backend.writeme.ai/amember/api/access?_key=VOdigxYoFL0cvyIcCE58';
 
@@ -130,7 +129,6 @@ export class UsersService {
       };
 
       let aMemberUser = await axios.post(apiUrl, new URLSearchParams(data).toString(), config);
-      console.log(aMemberUser);
 
       let accessData = {
         _key: "VOdigxYoFL0cvyIcCE58",
@@ -140,8 +138,7 @@ export class UsersService {
         expire_date: '2037-12-31',
       };
 
-      let aMemberAccess = await axios.post(apiUrl2, new URLSearchParams(accessData).toString(), config);
-      console.log(aMemberAccess);
+      await axios.post(apiUrl2, new URLSearchParams(accessData).toString(), config);
 
       const to = email;
       const subject = 'Email Verification';
@@ -284,7 +281,7 @@ export class UsersService {
         message: "Your password must be in 8 character"
       };
     }
-    
+
 
     let bcryptPassword = await this.hashPassword(password)
     await this.userRepository.update(id, { user_name: user_name, password: bcryptPassword });
@@ -453,8 +450,6 @@ export class UsersService {
     date = new Date();
     date.setDate(date.getDate() - 365);
 
-    console.log(getMember);
-
     let getLifeTimeMember = await this.userPlanRepository
       .createQueryBuilder()
       .update(UserPlan)
@@ -462,8 +457,6 @@ export class UsersService {
       .where('purchased_at < :date', { date })
       .andWhere('user_id = :user_id', { user_id: userId })
       .andWhere('plan_id = :plan_id', { plan_id: 13 });
-
-    console.log(getLifeTimeMember);
 
     const balance = await this.userPlanRepository
       .createQueryBuilder('user_plans')
@@ -476,6 +469,7 @@ export class UsersService {
       .getRawOne();
 
     if (type === 'tab' && Number(balance.tabs_total) < 1 || type == 'article' && Number(balance.articles_total) < 1) {
+      console.log("not balance available balance");
       return false
     }
 
@@ -483,7 +477,7 @@ export class UsersService {
       .where('user_plans.user_id = :userId', { userId: userId })
       .andWhere('user_plans.used = :used', { used: 0 })
       .andWhere('user_plans.expired = :expired', { expired: 0 })
-      .andWhere('user_plans.invoice_payment_id != :invoice_payment_id', { invoice_payment_id: 0 })
+      .andWhere('user_plans.invoice_payment_id != :invoice_payment_id', { invoice_payment_id: 1 })
       .select([
         'user_plans.user_id',
         'user_plans.debit_tabs',
@@ -533,7 +527,7 @@ export class UsersService {
   }
 
   async wordCount(str) {
-    var wordCount = str.match(/(\w+)/g).length;
+    var wordCount = str.trim().split(/\s+/).length;
     return wordCount;
   }
 
@@ -576,7 +570,7 @@ export class UsersService {
       plan.user_plans_debit_articles = plan.user_plans_debit_articles ? plan.user_plans_debit_articles + words : words;
     }
 
-    await this.userPlanRepository.save(plan);
+    // await this.userPlanRepository.save(plan);
 
     const planDetails = await this.planRepository.findOne({ where: { id: plan.plan_id } });
 
@@ -611,305 +605,333 @@ export class UsersService {
   }
 
   async article_generate(userId: number, req: string[]) {
-    // await this.getAllow(11, req['body'].type)
-    await this.getAllow(userId, req['body'].type)
 
+    let getArticleResponse = await this.getAllow(userId, req['body'].type)
 
-      .then(function (result) {
+    if (getArticleResponse) {
 
-        if (result) {
+      var a = req['body'].keywords,
+        r = req['body'].keywords2,
+        i = req['body'].productName,
+        p = req['body'].productName2,
+        o = req['body'].tone,
+        s = req['body'].language,
+        l = req['body'].copy,
+        c = req['body'].text,
+        d = req['body'].usecase,
+        y = {
 
-          var a = req['body'].keywords,
-            r = req['body'].keywords2,
-            i = req['body'].productName,
-            p = req['body'].productName2,
-            o = req['body'].tone,
-            s = req['body'].language,
-            l = req['body'].copy,
-            c = req['body'].text,
-            d = req['body'].type,
-            y = {
+          AdsforSocialMedia: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write social media ads for given keywords and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} ad to run on social media for the following keywords ${a} and product description ${i}.` }],
+          },
+          AdsforGoogleSearch: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write ads to run on search engines for given keywords and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} ad to run on search engines for following keywords ${a} and product description ${i}.` }],
 
-              AdsforSocialMedia: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write social media ads for given keywords and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} ad to run on social media for the following keywords ${a} and product description ${i}.` }],
-              },
-              AdsforGoogleSearch: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write ads to run on search engines for given keywords and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} ad to run on search engines for following keywords ${a} and product description ${i}.` }],
+          },
+          AdandPostCaptionIdeas: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write social media post captions for given idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} ad or post caption for the following idea ${i}.` }],
+          },
+          AppTitle: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app title for given keywords and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app title for following keywords ${a} and product description ${i}.` }],
+          },
+          AppShortDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app short description for given keywords and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app short description for following keywords ${a} and product description ${i}.` }],
+          },
+          AppLongDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app long description for given keywords and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app long description for following keywords ${a} and product description ${i}.` }],
+          },
+          BiddingProposalDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write bidding proposal for given details." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} bidding proposal for freelance websites with following details ${i}.` }],
+          },
+          BlogIdea: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write article heading for given keywords." },
+            { "role": "user", "content": `Translate this in ${s}. Write an article heading for following keywords ${a}.` }],
+          },
+          BlogOutline: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write article outline for given topic." },
+            { "role": "user", "content": `Translate this in ${s}. Write an article outline for following topic ${i}.` }],
+          },
+          BlogSectionWriting: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write section paragraph for given topic and keywords ." },
+            { "role": "user", "content": `Translate this in ${s}. Write a detailed paragraph in ${o} tone for following topic ${i} and keywords ${a}.` }],
+          },
+          BlogPostIntroduction: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write article introduction paragraph for given topic." },
+            { "role": "user", "content": `Translate this in ${s}. Write an article introduction paragraph in ${o} tone for following topic ${i}.` }],
+          },
+          BlogPostConclusion: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write article conclusion paragraph for given topic." },
+            { "role": "user", "content": `Translate this in ${s}. Write an article conclusion paragraph in ${o} tone for following topic ${i}.` }],
+          },
+          BrandName: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write list of brand names for given brand description." },
+            { "role": "user", "content": `Translate this in ${s}. Write a ${o} list of brand names where brand description is ${i}.` }],
+          },
+          BusinessIdeaPitch: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write business idea pitch for given business idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} business idea pitch where business idea is ${i}.` }],
+          },
+          BusinessIdeas: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write business idea for given interest and skills." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} business idea where interest is ${a} and skills are ${i}.` }],
+          },
+          CalltoAction: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write call to action for given description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} call to action for the following description ${i}.` }],
+          },
+          CopywritingFrameworkAIDA: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write AIDA writing framework for given description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} AIDA writing framework for following product description ${i}.` }],
+          },
+          CopywritingFrameworkPAS: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write PAS writing framework for given description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} PAS writing framework for following product description ${i}.` }],
+          },
+          WebsiteCopy: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write website copy for given website name, website about. website product and brand description" },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} website copy where website name ${a}, website about ${r}, and website product or brand description ${i}.` }],
+          },
+          Email: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write email for given key points." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} email for following key points ${i}.` }],
+          },
+          EmailWritingSequence: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write Email sequences that I should send to my users/customers within one month for given business." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} 10 Email sequences that I should send to my users/customers within one month for my following business ${i}.` }],
+          },
+          GigDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write gig description for given title ans skills." },
+            { "role": "user", "content": `Translate this in ${s}. Write a ${o} gig description for following title ${a} and skills ${i}.` }],
+          },
+          GrammarImprove: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write a correct standard english." },
+            { "role": "user", "content": `Translate this in ${s}. Correct this to standard English:\n\n ${i}.` }],
+          },
+          GrammarRephrase: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write a Rephrase standard English" },
+            { "role": "user", "content": `Translate this in ${s}. Rephrase this to standard English:\n\n ${i}. ` }],
+          },
+          GrammarExpand: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write detailed paragraph for given topic." },
+            { "role": "user", "content": `Translate this in ${s}. Write a detailed paragraph in ${o} tone for following topic:\n\n ${i} ` }],
+          },
+          GrammarShorten: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that summarize given text in standard English." },
+            { "role": "user", "content": `Translate this in ${s}. Summarize this text in standard English:\n\n ${i}.` }],
+          },
+          GrammarAppend: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that suggest two more lines for given text." },
+            { "role": "user", "content": `Translate this in ${s}. Suggest two more lines for this text in standard English:\n\n ${i}.` }],
+          },
+          Interview: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write list of interview questions with persons professional bio and interview context." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} list of interview questions where persons professional bio is ${i}. And interview context is ${p}.` }],
+          },
+          JobDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write job description for the given role." },
+            { "role": "user", "content": `Translate this in ${s}. Create ${o} job description for the following role ${a}.` }],
+          },
+          MagicCommand: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that helps user with given details." },
+            { "role": "user", "content": `Translate this in ${s}. Use ${o} tone, ${i}.` }],
+          },
+          ChatGPT: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant." },
+            { "role": "user", "content": `${i}` }],
+          },
+          PostandCaptionIdeas: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write introduction text and title for post idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} introduction text and title for the following post idea: ${a}.` }],
+          },
+          productdescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write product description for product name and description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} product description for following details product name: ${a} about the product: ${i}.` }],
+          },
+          ProfileBio: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write profile bio for given detials." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} profile bio for ${i}.` }],
+          },
+          Poetry: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write poetry for given idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} poetry for the following idea: ${i}.` }],
+          },
+          QuestionandAnswer: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that answer the questions." },
+            { "role": "user", "content": `Translate this in ${s}. ${i}.` }],
+          },
+          ReplytoReviewsandMessages: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write reply to a message for given message." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} reply for the following message: ${i}.` }],
+          },
+          SEOMetaDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write search engine optimised 160 alphabet characters description for given title." },
+            { "role": "user", "content": `Translate this in ${s}. Write 160 alphabet characters ${o} description for the following title: ${i}.` }],
+          },
+          SEOMetaTitle: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write search engine optimised 60 alphabet characters title for given keywords." },
+            { "role": "user", "content": `Translate this in ${s}. Write 60 alphabet characters ${o} title for the following keywords: ${a}.` }],
+          },
+          SMSandNotification: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write 160 alphabet characters short message as sms for given context." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} short message as sms for the following context: ${i}.` }],
+          },
+          SongLyrics: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write song lyrics for given idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} song lyrics for the following song idea: ${i}.` }],
+          },
+          StoryPlot: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write story plot for given idea." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} story plot for the following story idea: ${i}.` }],
+          },
+          TaglineandHeadline: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write tag line and head line for given description." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} tag line and head line for the following description: ${i}.` }],
 
-              },
-              AdandPostCaptionIdeas: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write social media post captions for given idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} ad or post caption for the following idea ${i}.` }],
-              },
-              AppTitle: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app title for given keywords and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app title for following keywords ${a} and product description ${i}.` }],
-              },
-              AppShortDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app short description for given keywords and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app short description for following keywords ${a} and product description ${i}.` }],
-              },
-              AppLongDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write google play store app long description for given keywords and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} google play store app long description for following keywords ${a} and product description ${i}.` }],
-              },
-              BiddingProposalDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write bidding proposal for given details." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} bidding proposal for freelance websites with following details ${i}.` }],
-              },
-              BlogIdea: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write article heading for given keywords." },
-                { "role": "user", "content": `Translate this in ${s}. Write an article heading for following keywords ${a}.` }],
-              },
-              BlogOutline: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write article outline for given topic." },
-                { "role": "user", "content": `Translate this in ${s}. Write an article outline for following topic ${i}.` }],
-              },
-              BlogSectionWriting: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write section paragraph for given topic and keywords ." },
-                { "role": "user", "content": `Translate this in ${s}. Write a detailed paragraph in ${o} tone for following topic ${i} and keywords ${a}.` }],
-              },
-              BlogPostIntroduction: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write article introduction paragraph for given topic." },
-                { "role": "user", "content": `Translate this in ${s}. Write an article introduction paragraph in ${o} tone for following topic ${i}.` }],
-              },
-              BlogPostConclusion: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write article conclusion paragraph for given topic." },
-                { "role": "user", "content": `Translate this in ${s}. Write an article conclusion paragraph in ${o} tone for following topic ${i}.` }],
-              },
-              BrandName: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write list of brand names for given brand description." },
-                { "role": "user", "content": `Translate this in ${s}. Write a ${o} list of brand names where brand description is ${i}.` }],
-              },
-              BusinessIdeaPitch: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write business idea pitch for given business idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} business idea pitch where business idea is ${i}.` }],
-              },
-              BusinessIdeas: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write business idea for given interest and skills." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} business idea where interest is ${a} and skills are ${i}.` }],
-              },
-              CalltoAction: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write call to action for given description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} call to action for the following description ${i}.` }],
-              },
-              CopywritingFrameworkAIDA: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write AIDA writing framework for given description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} AIDA writing framework for following product description ${i}.` }],
-              },
-              CopywritingFrameworkPAS: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write PAS writing framework for given description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} PAS writing framework for following product description ${i}.` }],
-              },
-              WebsiteCopy: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write website copy for given website name, website about. website product and brand description" },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} website copy where website name ${a}, website about ${r}, and website product or brand description ${i}.` }],
-              },
-              Email: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write email for given key points." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} email for following key points ${i}.` }],
-              },
-              EmailWritingSequence: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write Email sequences that I should send to my users/customers within one month for given business." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} 10 Email sequences that I should send to my users/customers within one month for my following business ${i}.` }],
-              },
-              GigDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write gig description for given title ans skills." },
-                { "role": "user", "content": `Translate this in ${s}. Write a ${o} gig description for following title ${a} and skills ${i}.` }],
-              },
-              GrammarImprove: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write a correct standard english." },
-                { "role": "user", "content": `Translate this in ${s}. Correct this to standard English:\n\n ${i}.` }],
-              },
-              GrammarRephrase: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write a Rephrase standard English" },
-                { "role": "user", "content": `Translate this in ${s}. Rephrase this to standard English:\n\n ${i}. ` }],
-              },
-              GrammarExpand: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write detailed paragraph for given topic." },
-                { "role": "user", "content": `Translate this in ${s}. Write a detailed paragraph in ${o} tone for following topic:\n\n ${i} ` }],
-              },
-              GrammarShorten: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that summarize given text in standard English." },
-                { "role": "user", "content": `Translate this in ${s}. Summarize this text in standard English:\n\n ${i}.` }],
-              },
-              GrammarAppend: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that suggest two more lines for given text." },
-                { "role": "user", "content": `Translate this in ${s}. Suggest two more lines for this text in standard English:\n\n ${i}.` }],
-              },
-              Interview: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write list of interview questions with persons professional bio and interview context." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} list of interview questions where persons professional bio is ${i}. And interview context is ${p}.` }],
-              },
-              JobDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write job description for the given role." },
-                { "role": "user", "content": `Translate this in ${s}. Create ${o} job description for the following role ${a}.` }],
-              },
-              MagicCommand: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that helps user with given details." },
-                { "role": "user", "content": `Translate this in ${s}. Use ${o} tone, ${i}.` }],
-              },
-              ChatGPT: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant." },
-                { "role": "user", "content": `${i}` }],
-              },
-              PostandCaptionIdeas: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write introduction text and title for post idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} introduction text and title for the following post idea: ${a}.` }],
-              },
-              productdescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write product description for product name and description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} product description for following details product name: ${a} about the product: ${i}.` }],
-              },
-              ProfileBio: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write profile bio for given detials." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} profile bio for ${i}.` }],
-              },
-              Poetry: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write poetry for given idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} poetry for the following idea: ${i}.` }],
-              },
-              QuestionandAnswer: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that answer the questions." },
-                { "role": "user", "content": `Translate this in ${s}. ${i}.` }],
-              },
-              ReplytoReviewsandMessages: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write reply to a message for given message." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} reply for the following message: ${i}.` }],
-              },
-              SEOMetaDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write search engine optimised 160 alphabet characters description for given title." },
-                { "role": "user", "content": `Translate this in ${s}. Write 160 alphabet characters ${o} description for the following title: ${i}.` }],
-              },
-              SEOMetaTitle: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write search engine optimised 60 alphabet characters title for given keywords." },
-                { "role": "user", "content": `Translate this in ${s}. Write 60 alphabet characters ${o} title for the following keywords: ${a}.` }],
-              },
-              SMSandNotification: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write 160 alphabet characters short message as sms for given context." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} short message as sms for the following context: ${i}.` }],
-              },
-              SongLyrics: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write song lyrics for given idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} song lyrics for the following song idea: ${i}.` }],
-              },
-              StoryPlot: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write story plot for given idea." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} story plot for the following story idea: ${i}.` }],
-              },
-              TaglineandHeadline: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write tag line and head line for given description." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} tag line and head line for the following description: ${i}.` }],
+          },
+          TestimonialandReview: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write testimonial or review for given product title and keywords." },
+            { "role": "user", "content": `Translate this in ${s}. Create ${o} review or testimonial for the following product title: ${i} where focused keywords are: ${a}.` }],
+          },
+          VideoChannelDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write video channel description for given title." },
+            { "role": "user", "content": ` Translate this in ${s}. Write ${o} channel description for the following channel purpose: ${i}.` }],
+          },
+          VideoDescription: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write video description for given title." },
+            { "role": "user", "content": ` Translate this in ${s}. Write ${o} video description for the following video title: ${i}` }],
 
-              },
-              TestimonialandReview: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write testimonial or review for given product title and keywords." },
-                { "role": "user", "content": `Translate this in ${s}. Create ${o} review or testimonial for the following product title: ${i} where focused keywords are: ${a}.` }],
-              },
-              VideoChannelDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write video channel description for given title." },
-                { "role": "user", "content": ` Translate this in ${s}. Write ${o} channel description for the following channel purpose: ${i}.` }],
-              },
-              VideoDescription: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write video description for given title." },
-                { "role": "user", "content": ` Translate this in ${s}. Write ${o} video description for the following video title: ${i}` }],
+          },
+          VideoIdea: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that write video idea for given keyword." },
+            { "role": "user", "content": `Translate this in ${s}. Write ${o} video idea for the following keywords: ${a}` }],
+          },
+          Tab: {
+            model: "gpt-4",
+            messages: [{ "role": "system", "content": "You are a helpful assistant that suggest next few lines for given text." },
+            { "role": "user", "content": `${c}` }],
+          },
+          // Tab: {
+          //   model: "gpt-4",
+          //   messages: [{ "role": "system", "content": "You are a helpful assistant that suggest next few lines for given text." },
+          //   { "role": "user", "content": `Translate this in ${s}. Suggest few lines ${o} for the following paragraph: ${a}` }],
+          // },
+        };
 
-              },
-              VideoIdea: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that write video idea for given keyword." },
-                { "role": "user", "content": `Translate this in ${s}. Write ${o} video idea for the following keywords: ${a}` }],
-              },
-              tab: {
-                model: "gpt-4",
-                messages: [{ "role": "system", "content": "You are a helpful assistant that suggest next few lines for given text." },
-                { "role": "user", "content": `Translate this in ${s}. Suggest few lines ${o} for the following paragraph: ${a}` }],
-              },
-            };
+      let parameters = {
+        model: y[d].model,
+        messages: y[d].messages,
+      };
 
-          let parameters = {
-            model: y[d].model,
-            messages: y[d].messages,
-          };
+      const configuration = new Configuration({
+        apiKey: process.env.OPENAI_KEY,
+      });
 
-          const configuration = new Configuration({
-            apiKey: process.env.OPENAI_KEY,
-          });
+      const openai = new OpenAIApi(configuration);
+      var chatreply = '';
 
-          const openai = new OpenAIApi(configuration);
-          var chatreply = '';
-          openai.createChatCompletion(parameters).then((response) => {
-            chatreply = response.data.choices[0].message.content;
+      let OpenAICall = await openai.createChatCompletion(parameters).then(async (response) => {
 
-            // console.log(chatreply);
-            // var WordCounter = wordCount(chatreply);
-            // updateAIUsage(WordCounter, req);
-            // var data = {
-            //   data: chatreply,
-            //   words: WordCounter,
-            // };
-            // res.status(200).send(data);
-          });
-          // checkusage = false;
-        }
-        else {
-          return {
-            status: 200,
-            ok: false,
-            message: "balance exhausted"
-          };
-        }
-      })
+        chatreply = response.data.choices[0].message.content;
+        var WordCounter = await this.wordCount(chatreply);
+        await this.updateUsage(userId, req['body'].type, WordCounter);
+        var data = {
+          data: chatreply,
+          words: WordCounter,
+        };
 
-    // console.log(await this.updateUsage(userId, req['body'].type, "Lorem Ipsum is simply dummy text of the printing and typesetting industry."));
+        return data;
+      });
+
+      return OpenAICall;
+    }
+    else {
+      return {
+        status: 200,
+        ok: false,
+        message: "balance exhausted"
+      };
+    }
+
+    // await this.updateUsage(userId, req['body'].type, "Lorem Ipsum is simply dummy text of the printing and typesetting industry.");
+
+    
+
+  }
+
+  async set_latest_article(id: number, article_id: number) {
+
+    await this.userRepository.update(id, { lastArticleId: article_id });
+
+    return {
+      status: 200,
+      ok: false,
+      message: "Last article Id Added successfully"
+    };
+  }
+
+  async get_latest_article(id: number) {
+
+    let getUserData = await this.userRepository.findOne({ where: { id } })
+
+    return {
+      status: 200,
+      ok: true,
+      last_article_id: getUserData.lastArticleId
+    }
   }
 
   create(createUserDto: CreateUserDto) {
