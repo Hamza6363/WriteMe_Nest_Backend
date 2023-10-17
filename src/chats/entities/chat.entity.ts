@@ -1,4 +1,4 @@
-import { Entity, Column, UpdateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, UpdateDateColumn, PrimaryGeneratedColumn, CreateDateColumn, DeleteDateColumn } from 'typeorm';
 
 @Entity('chats')
 export class Chat {
@@ -6,14 +6,22 @@ export class Chat {
     id: number;
 
     @Column()
-    userId: number;
+    user_id: number;
 
-    @Column()
+    @Column({type: 'longtext'})
     title: string;
 
-    @Column()
+    @Column({type: 'longtext', nullable: true})
     chat: string;
     
-    @UpdateDateColumn()
+    @CreateDateColumn({ nullable: true, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    created_at: Date;
+
+    @UpdateDateColumn({ nullable: true, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updated_at: Date;
+    
+    // @UpdateDateColumn({ nullable: true, type: 'timestamp'})
+    // deleted_at: Date;
+    @DeleteDateColumn()
+    deleted_at?: Date;
 }

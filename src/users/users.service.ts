@@ -405,8 +405,7 @@ export class UsersService {
 
     let getUserData = await this.filterById(id);
 
-
-    let getUserSubscription = await axios.get(process.env.AMEMBER_BASEURL + '/check-access/by-email?_key=' + process.env.AMEMBER_KEY + '&email=khubaib@siliconwebteam.com')
+    let getUserSubscription = await axios.get(process.env.AMEMBER_BASEURL + '/check-access/by-email?_key=' + process.env.AMEMBER_KEY + '&email=' + getUserData.email)
 
 
     let getUserSubscriptionId = Object.keys(getUserSubscription.data.subscriptions);

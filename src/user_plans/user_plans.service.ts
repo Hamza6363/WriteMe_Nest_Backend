@@ -11,7 +11,7 @@ export class UserPlansService {
   constructor(
     @InjectRepository(UserPlan)
     private readonly userPlanRepository: Repository<UserPlan>,
-  ) { 
+  ) {
   }
 
   create(createUserPlanDto: CreateUserPlanDto) {
@@ -51,8 +51,25 @@ export class UserPlansService {
       .groupBy('user_plans.user_id')
       .limit(1)
       .getRawOne();
-      
-    return getUserPlan; 
+
+    return getUserPlan;
   }
-  
+
+  async getUserPlan(userId: number) {
+    let getUserPlan = await this.userPlanRepository.find({
+      where: {
+        user_id: userId,
+        expired: 0,
+      },
+    });
+    
+    return {
+      status: 200,
+      ok: true,
+      data: getUserPlan
+    };
+
+  }
+
+
 }

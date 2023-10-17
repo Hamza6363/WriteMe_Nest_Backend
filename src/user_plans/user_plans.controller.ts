@@ -34,6 +34,26 @@ export class UserPlansController {
       });
   }
 
+  @UseGuards(AuthGuard)
+  @Get('getUserPlan')
+  async getUserPlan(@Req() req, @Res() res) {
+    await this.userPlansService.getUserPlan(req.user.sub)
+      .then(response => {
+        return res.status(200).json({
+          status: 200,
+          response,
+        });
+      })
+      .catch(error => {
+        // Handle error
+        return res.status(500).json({
+          status: 500,
+          code: 'error',
+          message: 'An error occurred.',
+        });
+      });
+  }
+
   @Post()
   create(@Body() createUserPlanDto: CreateUserPlanDto) {
     return this.userPlansService.create(createUserPlanDto);

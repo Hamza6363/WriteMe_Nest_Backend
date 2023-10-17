@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, JoinTable, CreateDateColumn } from 'typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 import { Category } from 'src/categories/entities/category.entity';
 
@@ -7,18 +7,24 @@ export class ShortArticle {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column('text')
     article: string;
+    
+    @Column('text')
+    current_article: string;
 
     @Column()
-    userId: number;
+    user_id: number;
 
     @Column()
-    projectId: number;
+    project_id: number;
 
     @Column()
     title: string;
     
+    @CreateDateColumn()
+    created_at?: Date;
+
     @ManyToOne(type => Project, project => project.shortArticles)
     project: Project;
     
